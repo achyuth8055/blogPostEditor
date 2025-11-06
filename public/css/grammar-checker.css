@@ -1,0 +1,21 @@
+
+.gt-wrapper { position: relative; }
+.gt-overlay-host { pointer-events: none; }
+.gt-mirror { color: transparent; background: transparent; }
+.gt-mirror { color: transparent; }
+.gt-mirror .gt-underline { color: inherit; text-underline-offset: 3px; }
+
+.gt-tooltip {
+  position: fixed;
+  z-index: 99999;
+  background: rgba(17, 24, 39, 0.95);
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.2;
+  max-width: 280px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  display: none;
+  pointer-events: none;
+}

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Blog - Home</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-12">
+        
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">AI Blog Editor</h1>
+            <p class="text-xl text-gray-600">Create and manage your blog posts</p>
+        </div>
+
+        <div class="max-w-2xl mx-auto mb-12">
+            <button 
+                id="createBlogBtn"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-lg shadow-lg transition-all transform hover:scale-105 text-lg">
+                ✨ Create New Blog Post
+            </button>
+        </div>
+
+        <div class="max-w-4xl mx-auto">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">📝 Your Drafts</h2>
+            <div id="draftsList" class="space-y-4">
+                
+                <div class="text-center py-8 text-gray-500">Loading drafts...</div>
+            </div>
+        </div>
+
+        <div class="max-w-4xl mx-auto mt-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">✅ Published Posts</h2>
+            <div id="publishedList" class="space-y-4">
+                
+                <div class="text-center py-8 text-gray-500">Loading published posts...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4 transform transition-all">
+            <div class="flex items-center mb-4">
+                <div class="flex-shrink-0">
+                    <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                        <span class="material-symbols-outlined text-red-600 text-xl">delete</span>
+                    </div>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-lg font-medium text-gray-900">Delete Draft</h3>
+                </div>
+            </div>
+            <div class="mb-6">
+                <p class="text-sm text-gray-600">Are you sure you want to delete this draft? This action cannot be undone.</p>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button type="button" id="cancelDelete" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition-colors">
+                    Cancel
+                </button>
+                <button type="button" id="confirmDelete" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="messageModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4 transform transition-all">
+            <div class="flex items-center mb-4">
+                <div class="flex-shrink-0">
+                    <div id="messageIcon" class="w-10 h-10 rounded-full flex items-center justify-center">
+                        <span class="material-symbols-outlined text-xl"></span>
+                    </div>
+                </div>
+                <div class="ml-3">
+                    <h3 id="messageTitle" class="text-lg font-medium text-gray-900"></h3>
+                </div>
+            </div>
+            <div class="mb-4">
+                <p id="messageText" class="text-sm text-gray-600"></p>
+            </div>
+            <div class="flex justify-end">
+                <button type="button" id="closeMessageModal" class="px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-colors">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Create new blog post
+        document.getElementById('createBlogBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('createBlogBtn');
+            btn.disabled = true;
+            btn.textContent = 'Creating...';
+            
+            try {
+                const response = await fetch('/api/posts/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    window.location.href = `/?postId=${result.postId}`;
+                } else {
+                    throw new Error('Failed to create post');
+                }
+            } catch (error) {
+                console.error('Error creating post:', error);
+                alert('Failed to create new post: ' + error.message);
+                btn.disabled = false;
+                btn.textContent = '✨ Create New Blog Post';
+            }
+        });
+
+        // Load drafts
+        async function loadDrafts() {
+            try {
+                const response = await fetch('/api/posts/drafts');
+                const drafts = await response.json();
+                
+                const draftsList = document.getElementById('draftsList');
+                
+                if (drafts.length === 0) {
+                    draftsList.innerHTML = '<div class="text-center py-8 text-gray-500">No drafts yet. Create your first blog post!</div>';
+                    return;
+                }
+                
+                draftsList.innerHTML = drafts.map(draft => `
+                    <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <h3 class="text-xl font-semibold text-gray-900 mb-2">
+                                    ${draft.title || 'Untitled Draft'}
+                                </h3>
+                                <p class="text-gray-600 text-sm mb-3">
+                                    Last updated: ${new Date(draft.updatedAt).toLocaleString()}
+                                </p>
+                                <div class="text-gray-700 text-sm line-clamp-2">
+                                    ${draft.content ? draft.content.replace(/<[^>]*>/g, '').substring(0, 150) + '...' : 'No content yet'}
+                                </div>
+                            </div>
+                            <div class="ml-4 flex flex-col gap-2">
+                                <a href="/?postId=${draft._id}" 
+                                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium">
+                                    Edit
+                                </a>
+                                <button onclick="deleteDraft('${draft._id}')" 
+                                        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-medium">
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading drafts:', error);
+                document.getElementById('draftsList').innerHTML = 
+                    '<div class="text-center py-8 text-red-500">Failed to load drafts</div>';
+            }
+        }
+
+        // Load published posts
+        async function loadPublished() {
+            try {
+                const response = await fetch('/api/posts/published');
+                const posts = await response.json();
+                
+                const publishedList = document.getElementById('publishedList');
+                
+                if (posts.length === 0) {
+                    publishedList.innerHTML = '<div class="text-center py-8 text-gray-500">No published posts yet</div>';
+                    return;
+                }
+                
+                publishedList.innerHTML = posts.map(post => `
+                    <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <h3 class="text-xl font-semibold text-gray-900 mb-2">
+                                    ${post.title}
+                                </h3>
+                                <p class="text-gray-600 text-sm mb-3">
+                                    Published: ${new Date(post.createdAt).toLocaleString()}
+                                </p>
+                                <div class="text-gray-700 text-sm line-clamp-2">
+                                    ${post.content ? post.content.replace(/<[^>]*>/g, '').substring(0, 150) + '...' : ''}
+                                </div>
+                            </div>
+                            <div class="ml-4 flex flex-col gap-2">
+                                <a href="/post/${post._id}" 
+                                   class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium">
+                                    View
+                                </a>
+                                <a href="/?postId=${post._id}" 
+                                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium">
+                                    Edit
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading published posts:', error);
+                document.getElementById('publishedList').innerHTML = 
+                    '<div class="text-center py-8 text-red-500">Failed to load published posts</div>';
+            }
+        }
+
+        let currentDeleteId = null;
+
+        // Modal utility functions
+        function showDeleteModal(postId) {
+            currentDeleteId = postId;
+            const modal = document.getElementById('deleteModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function hideDeleteModal() {
+            const modal = document.getElementById('deleteModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            currentDeleteId = null;
+        }
+
+        function showMessageModal(type, title, message) {
+            const modal = document.getElementById('messageModal');
+            const icon = modal.querySelector('#messageIcon');
+            const iconSpan = icon.querySelector('span');
+            const titleEl = modal.querySelector('#messageTitle');
+            const textEl = modal.querySelector('#messageText');
+            const closeBtn = modal.querySelector('#closeMessageModal');
+
+            if (type === 'success') {
+                icon.className = 'w-10 h-10 bg-green-100 rounded-full flex items-center justify-center';
+                iconSpan.className = 'material-symbols-outlined text-green-600 text-xl';
+                iconSpan.textContent = 'check_circle';
+                closeBtn.className = 'px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-colors';
+            } else {
+                icon.className = 'w-10 h-10 bg-red-100 rounded-full flex items-center justify-center';
+                iconSpan.className = 'material-symbols-outlined text-red-600 text-xl';
+                iconSpan.textContent = 'error';
+                closeBtn.className = 'px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors';
+            }
+
+            titleEl.textContent = title;
+            textEl.textContent = message;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function hideMessageModal() {
+            const modal = document.getElementById('messageModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // Confirm delete function
+        async function confirmDeleteDraft() {
+            if (!currentDeleteId) return;
+
+            try {
+                const response = await fetch(`/api/posts/${currentDeleteId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    hideDeleteModal();
+                    showMessageModal('success', 'Success', 'Draft deleted successfully!');
+                    loadDrafts(); // Reload list
+                } else {
+                    throw new Error('Failed to delete draft');
+                }
+            } catch (error) {
+                console.error('Error deleting draft:', error);
+                hideDeleteModal();
+                showMessageModal('error', 'Error', 'Failed to delete draft: ' + error.message);
+            }
+        }
+
+        // Delete draft function - now shows modal instead of confirm
+        window.deleteDraft = async function(postId) {
+            showDeleteModal(postId);
+        };
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Delete modal event listeners
+            document.getElementById('cancelDelete').addEventListener('click', hideDeleteModal);
+            document.getElementById('confirmDelete').addEventListener('click', confirmDeleteDraft);
+            
+            // Message modal event listener
+            document.getElementById('closeMessageModal').addEventListener('click', hideMessageModal);
+
+            // Close modals when clicking outside
+            document.getElementById('deleteModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    hideDeleteModal();
+                }
+            });
+
+            document.getElementById('messageModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    hideMessageModal();
+                }
+            });
+
+            // Add ESC key support
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    hideDeleteModal();
+                    hideMessageModal();
+                }
+            });
+        });
+
+        // Load data on page load
+        loadDrafts();
+        loadPublished();
+    </script>
+</body>
+</html>
