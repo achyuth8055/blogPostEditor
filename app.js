@@ -51,10 +51,12 @@ initDb()
   .then(() => {
     app.locals.db = getDb();
     app.listen(PORT, () => {
-      console.log(`Server is running on http:
+      console.log(`Server is running on http://localhost:${PORT}`);
+      console.log('Connected to MongoDB successfully');
     });
   })
   .catch((error) => {
     console.error('Failed to initialize database connection:', error);
     process.exit(1);
   });
+  
