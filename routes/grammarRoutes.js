@@ -9,7 +9,7 @@ router.post('/check', async (req, res) => {
       motherTongue,
       disabledRules,
       apiPath = '/v2/check',
-      endpoint = 'https:
+      endpoint = 'https://api.languagetool.org'
     } = req.body || {};
 
     if (!text || typeof text !== 'string' || text.trim().length === 0) {

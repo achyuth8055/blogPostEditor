@@ -907,7 +907,7 @@ document.addEventListener('DOMContentLoaded', () => {
             linkTextInput.value = '';
         }
 
-        linkUrlInput.value = 'https:
+        linkUrlInput.value = 'https://';
         linkModal.classList.remove('hidden');
         linkModal.style.display = 'flex';
         console.log('🔗 Modal display set to flex, classes:', linkModal.className);
@@ -929,7 +929,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let url = linkUrlInput.value.trim();
         console.log('🔗 URL entered:', url);
-        if (!url || url === 'https:
+        if (!url || url === 'https://' || url === 'https:') {
             console.log('🔗 No URL entered, returning');
             if (window.showErrorModal) {
                 window.showErrorModal('URL Required', 'Please enter a valid URL for the link.');

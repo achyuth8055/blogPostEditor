@@ -12,7 +12,7 @@ router.post('/analyze', async (req, res) => {
       metaDescription: req.body.metaDescription || '',
       focusKeyword: req.body.focusKeyword || '',
       slug: req.body.slug || seoService.generateSlug(req.body.title || ''),
-      siteUrl: process.env.SITE_URL || 'http:
+      siteUrl: process.env.SITE_URL || 'http://localhost:3000'
     };
 
     const analysis = await seoService.analyzeBlogBeforePublish(blogData);

@@ -1,7 +1,7 @@
 const fetch = globalThis.fetch;
 
 const DEFAULT_MODEL = 'deepseek-chat';
-const DEFAULT_API_URL = 'https:
+const DEFAULT_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 
 function requireApiKey() {
   if (!process.env.DEEPSEEK_API_KEY) {
